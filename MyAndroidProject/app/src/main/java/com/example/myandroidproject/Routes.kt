@@ -12,4 +12,7 @@ data object RegisterRoute
 data object HomeRoute
 
 @Serializable
-data object AddScheduleRoute
+data object AddHabitRoute
+
+@Serializable
+data object CreateScheduleRoute

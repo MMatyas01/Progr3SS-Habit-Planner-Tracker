@@ -1,9 +1,9 @@
 version: '3.8'
+
 services:
   backend:
     build:
       context: .
-      # Ha ARM hoston vagy (Apple Silicon), ez segít:
     ports:
       - '8080:8080'
     depends_on:
@@ -12,9 +12,17 @@ services:
       redis:
         condition: service_healthy
     environment:
-      # DATABASE_URL: postgres://user:password@db:5432/dbname
-      # REDIS_URL: redis://redis:6379 # <-- Ezt fogja olvasni a backend
-      # Alternatív bontva:
+      AT_SECRET: "my-super-secret-at-key-for-lab7-1234567890"
+      RT_SECRET: "my-super-secret-rt-key-for-lab7-1234567890"
+      
+      # A NestJS kódod által várt TypeORM változók:
+      PG_HOST: db
+      PG_PORT: 5432
+      PG_USERNAME: user
+      PG_PASSWORD: password
+      PG_DATABASE: dbname
+      
+      # Redis kapcsolat (ezt a kód is így várja):
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
@@ -36,13 +44,10 @@ services:
       retries: 10
 
   redis:
-    # Ha csak sima Redis kell:
     image: redis:7-alpine
-    # Ha a logban látott modulok kellenek (Bloom/Search/JSON/TS), akkor:
-    # image: redis/redis-stack:latest
     restart: always
     ports:
-      - '6379:6379' # csak akkor kell, ha hostról is akarsz csatlakozni
+      - '6379:6379'
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s

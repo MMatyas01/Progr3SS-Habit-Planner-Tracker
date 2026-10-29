@@ -25,12 +25,15 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.myandroidproject.screens.SplashScreen
 import com.example.myandroidproject.ui.theme.MyAndroidProjectTheme
 import kotlinx.coroutines.delay
+import com.example.myandroidproject.network.RetrofitClient
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        RetrofitClient.init(applicationContext)
 
         enableEdgeToEdge()
 

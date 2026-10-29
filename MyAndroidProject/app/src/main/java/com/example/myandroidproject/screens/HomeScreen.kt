@@ -1,177 +1,119 @@
 package com.example.myandroidproject.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
-private data class ScheduleItem(
-    val title: String,
-    val startTime: String,
-    val status: String
-)
-
-private val sampleSchedules = listOf(
-    ScheduleItem("Morning workout", "08:00", "Completed"),
-    ScheduleItem("Study Kotlin", "10:00", "Planned"),
-    ScheduleItem("University assignments", "13:30", "Planned"),
-    ScheduleItem("Evening walk", "18:00", "Skipped")
-).sortedBy { it.startTime }
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myandroidproject.network.models.HabitResponse
+import com.example.myandroidproject.network.models.ScheduleResponse
+import com.example.myandroidproject.utils.DateTimeUtils
+import com.example.myandroidproject.viewmodel.HomeViewModel
+import java.util.*
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier,
-    onAddScheduleClick: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onAddHabit: () -> Unit,
+    onCreateSchedule: () -> Unit,
+    onLogout: () -> Unit,
+    viewModel: HomeViewModel = viewModel()
 ) {
-    val today = SimpleDateFormat(
-        "EEEE, d MMMM yyyy",
-        Locale.getDefault()
-    ).format(Date())
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-    ) {
-        // ── Fejléc sor: köszönés + Logout gomb ──
+    LaunchedEffect(Unit) {
+        viewModel.loadToday()
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Good day!",
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Text("Today", style = MaterialTheme.typography.headlineLarge)
+            TextButton(onClick = onLogout) { Text("Logout", color = MaterialTheme.colorScheme.error) }
+        }
+        Text(uiState.today, style = MaterialTheme.typography.bodyLarge)
 
-            TextButton(onClick = onLogout) {
-                Text("Logout")
+        Spacer(Modifier.height(16.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onAddHabit, modifier = Modifier.weight(1f)) { Text("Add habit") }
+            Button(onClick = onCreateSchedule, modifier = Modifier.weight(1f)) { Text("New schedule") }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        if (uiState.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            uiState.error?.let {
+                item { Text("Couldn't load your data: $it", color = MaterialTheme.colorScheme.error) }
             }
-        }
 
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = today,
-            style = MaterialTheme.typography.bodyLarge
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Today's schedule",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Text(
-                text = "${sampleSchedules.size} activities",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (sampleSchedules.isEmpty()) {
-            Text(
-                text = "No activities scheduled for today.",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        } else {
-            sampleSchedules.forEach { schedule ->
-                ScheduleCard(schedule = schedule)
-                Spacer(modifier = Modifier.height(12.dp))
+            item { Text("Today's schedule", style = MaterialTheme.typography.titleLarge) }
+            if (uiState.schedules.isEmpty()) {
+                item { Text("Nothing scheduled today", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            } else {
+                // JAVÍTÁS: "schedule_" előtag hozzáadva a kulcshoz
+                items(uiState.schedules, key = { "schedule_${it.id}" }) { schedule ->
+                    ScheduleCard(schedule)
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            item { Spacer(Modifier.height(16.dp)) }
 
-        Button(
-            onClick = onAddScheduleClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Add Schedule")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedButton(
-            onClick = { /* Placeholder for future functionality */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("View all schedules")
+            item { Text("Habits", style = MaterialTheme.typography.titleLarge) }
+            if (uiState.habits.isEmpty()) {
+                item { Text("No habits yet", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            } else {
+                // JAVÍTÁS: "habit_" előtag hozzáadva a kulcshoz
+                items(uiState.habits, key = { "habit_${it.id}" }) { habit ->
+                    HabitCard(habit)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun ScheduleCard(schedule: ScheduleItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = schedule.startTime,
-                    style = MaterialTheme.typography.titleMedium
-                )
+private fun ScheduleCard(schedule: ScheduleResponse) {
+    val categoryName = schedule.habit?.category?.name ?: "Other"
+    val startTime = DateTimeUtils.formatTime(schedule.startTime).ifBlank { "---" }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = schedule.title,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(16.dp)) {
+            Column(Modifier.width(60.dp)) {
+                Text(startTime, style = MaterialTheme.typography.titleMedium)
+                Text("${schedule.durationMinutes ?: 0} min", style = MaterialTheme.typography.bodySmall)
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Text(
-                text = schedule.status,
-                style = MaterialTheme.typography.labelMedium,
-                color = when (schedule.status) {
-                    "Completed" -> MaterialTheme.colorScheme.primary
-                    "Skipped" -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+            Column(Modifier.weight(1f)) {
+                Text(schedule.habit?.name ?: "Unknown habit", style = MaterialTheme.typography.titleMedium)
+                Text(categoryName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                schedule.notes?.takeIf { it.isNotBlank() }?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-            )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HabitCard(habit: HabitResponse) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(habit.name, style = MaterialTheme.typography.titleMedium)
+            Text(habit.category.name, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            Text(habit.goal, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

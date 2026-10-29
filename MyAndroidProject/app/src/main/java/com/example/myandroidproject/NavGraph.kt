@@ -7,7 +7,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.myandroidproject.screens.AddScheduleScreen
+import com.example.myandroidproject.screens.AddHabitScreen
+import com.example.myandroidproject.screens.CreateScheduleScreen
 import com.example.myandroidproject.screens.HomeScreen
 import com.example.myandroidproject.screens.LoginScreen
 import com.example.myandroidproject.screens.RegisterScreen
@@ -42,7 +43,7 @@ fun AppNavGraph(
             RegisterScreen(
                 onRegisterSuccess = {
                     navController.navigate(LoginRoute) {
-                        popUpTo<RegisterRoute> { inclusive = true } // Regisztrációs képernyő törlése a backstackből
+                        popUpTo<RegisterRoute> { inclusive = true }
                     }
                 },
                 onNavigateToLogin = {
@@ -53,8 +54,11 @@ fun AppNavGraph(
 
         composable<HomeRoute> {
             HomeScreen(
-                onAddScheduleClick = {
-                    navController.navigate(AddScheduleRoute)
+                onAddHabit = {
+                    navController.navigate(AddHabitRoute)
+                },
+                onCreateSchedule = {
+                    navController.navigate(CreateScheduleRoute)
                 },
                 onLogout = {
                     session.clear()
@@ -65,11 +69,30 @@ fun AppNavGraph(
             )
         }
 
-        composable<AddScheduleRoute> {
-            AddScheduleScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
+        // Ezeket a képernyőket a következő lépésben fogjuk megírni!
+        composable<AddHabitRoute> {
+            AddHabitScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.navigate(HomeRoute) {
+                        popUpTo<HomeRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToCreateSchedule = { navController.navigate(CreateScheduleRoute) }
+            )
+        }
+
+        composable<CreateScheduleRoute> {
+            CreateScheduleScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.navigate(HomeRoute) {
+                        popUpTo<HomeRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToAddHabit = { navController.navigate(AddHabitRoute) }
             )
         }
     }
