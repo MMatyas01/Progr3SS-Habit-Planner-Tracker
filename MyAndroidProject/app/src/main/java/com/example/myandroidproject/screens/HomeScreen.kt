@@ -1,4 +1,3 @@
-
 package com.example.myandroidproject.screens
 
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +42,8 @@ private val sampleSchedules = listOf(
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onAddScheduleClick: () -> Unit = {}
+    onAddScheduleClick: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val today = SimpleDateFormat(
         "EEEE, d MMMM yyyy",
@@ -55,10 +56,21 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
-        Text(
-            text = "Good day!",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        // ── Fejléc sor: köszönés + Logout gomb ──
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Good day!",
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            TextButton(onClick = onLogout) {
+                Text("Logout")
+            }
+        }
 
         Spacer(modifier = Modifier.height(6.dp))
 

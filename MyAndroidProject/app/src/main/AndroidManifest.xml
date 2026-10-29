@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- EZ A SOR HIÁNYZOTT! -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
             android:allowBackup="true"
             android:dataExtractionRules="@xml/data_extraction_rules"
@@ -9,7 +12,8 @@
             android:icon="@drawable/splash_icon"
             android:label="@string/app_name"
             android:supportsRtl="true"
-            android:theme="@style/Theme.MyAndroidProject">
+            android:theme="@style/Theme.MyAndroidProject"
+            android:usesCleartextTraffic="true">
 
         <activity
                 android:name=".MainActivity"

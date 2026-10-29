@@ -1,6 +1,6 @@
 # Use an official Node image as base
 # FROM node:22-slim
-FROM --platform=linux/amd64 node:22-slim
+FROM node:22-slim
 
 # Create app directory
 WORKDIR /usr/src/app

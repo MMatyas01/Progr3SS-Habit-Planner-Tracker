@@ -4,23 +4,24 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,23 +30,29 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myandroidproject.R
+import com.example.myandroidproject.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    onLoginClick: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    viewModel: LoginViewModel = viewModel()
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val state = viewModel.uiState
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
+    LaunchedEffect(state.isLoggedIn) {
+        if (state.isLoggedIn) {
+            viewModel.consumeLoginSuccess()
+            onLoginSuccess()
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(
-                id = R.drawable.login_background
-            ),
+            painter = painterResource(id = R.drawable.login_background),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -75,14 +82,12 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = state.email,
+                onValueChange = viewModel::onEmailChange,
                 label = { Text("Email") },
                 placeholder = { Text("Enter your email") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color(0xFF212121),
                     focusedBorderColor = Color(0xFF000000),
@@ -96,15 +101,13 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = state.password,
+                onValueChange = viewModel::onPasswordChange,
                 label = { Text("Password") },
                 placeholder = { Text("Enter your password") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password
-                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color(0xFF212121),
                     focusedBorderColor = Color(0xFF000000),
@@ -117,6 +120,22 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // ── ÚJ: Remember me sor ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = state.rememberMe,
+                    onCheckedChange = viewModel::onRememberMeChange
+                )
+                Text(
+                    text = "Remember me",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // ── Forgot password (jobbra igazítva) ──
             TextButton(
                 onClick = { /* Implement later */ },
                 modifier = Modifier.align(Alignment.End)
@@ -124,15 +143,42 @@ fun LoginScreen(
                 Text("Forgot password?")
             }
 
+            if (state.error != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = state.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = onLoginClick,
+                onClick = viewModel::login,
+                enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                Text("Login")
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Login")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(
+                onClick = onNavigateToRegister,
+                enabled = !state.isLoading
+            ) {
+                Text("Don't have an account? Register")
             }
         }
     }

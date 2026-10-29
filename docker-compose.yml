@@ -4,8 +4,6 @@ services:
     build:
       context: .
       # Ha ARM hoston vagy (Apple Silicon), ez segít:
-      platforms:
-        - linux/arm64
     ports:
       - '8080:8080'
     depends_on:
